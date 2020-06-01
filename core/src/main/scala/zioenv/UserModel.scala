@@ -3,7 +3,6 @@ package zioenv
 import zio.{Task, ZIO, ZLayer}
 
 object UserModel {
-
   // service
   trait Service {
     def insert(u: User): Task[Unit]

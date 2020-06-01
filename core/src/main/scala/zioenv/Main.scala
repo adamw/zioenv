@@ -17,7 +17,7 @@ object Main extends App {
       .provideLayer(userRegistrationLayer)
       .catchAll(t => ZIO.succeed(t.printStackTrace()).map(_ => ExitCode.failure))
       .map { u =>
-        println(s"Registered user $u")
+        println(s"Registered user: $u (layers)")
         ExitCode.success
       }
   }

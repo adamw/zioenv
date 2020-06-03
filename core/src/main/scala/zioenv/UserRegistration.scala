@@ -16,7 +16,7 @@ object UserRegistration {
   // layer
   val live: ZLayer[UserNotifier with UserModel, Nothing, UserRegistration] =
     ZLayer.fromServices[UserNotifier.Service, UserModel.Service, UserRegistration.Service](
-      new Service(_: UserNotifier.Service, _: UserModel.Service)
+      new Service(_, _)
     )
 
   // accessor

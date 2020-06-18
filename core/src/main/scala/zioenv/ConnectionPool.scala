@@ -1,6 +1,6 @@
 package zioenv
 
-import zio.{ZIO, ZLayer, ZManaged}
+import zio.{ZIO, ZManaged}
 
 // procedural interface
 class ConnectionPool(url: String) {
@@ -16,7 +16,4 @@ object ConnectionPoolIntegration {
     ZIO.effect(cp.close()).catchAll(_ => ZIO.unit)
   def managedConnectionPool(dbConfig: DBConfig): ZManaged[Any, Throwable, ConnectionPool] =
     ZManaged.make(createConnectionPool(dbConfig))(closeConnectionPool)
-
-  val live: ZLayer[HasDBConfig, Throwable, HasConnectionPool] =
-    ZLayer.fromServiceManaged(managedConnectionPool)
 }

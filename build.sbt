@@ -1,6 +1,9 @@
+import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
+
 lazy val commonSettings = commonSmlBuildSettings ++ Seq(
   organization := "com.softwaremill.zioenv",
-  scalaVersion := "2.13.2"
+  scalaVersion := "2.13.7",
+  resolvers ++= Seq(Opts.resolver.sonatypeSnapshots)
 )
 
 lazy val rootProject = (project in file("."))

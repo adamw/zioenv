@@ -1,21 +1,13 @@
 package zioenv
 
-import zio.{Task, ZIO, ZLayer}
+import zio.{Clock, Task, ZIO}
 
 object UserNotifier {
-  // service
-  trait Service {
-    def notify(u: User, msg: String): Task[Unit]
-  }
-
-  // layer
-  val live: ZLayer[Any, Nothing, UserNotifier] = ZLayer.succeed(new Service {
-    override def notify(u: User, msg: String): Task[Unit] =
+  def notify(u: User, msg: String): ZIO[Clock, Throwable, Unit] = {
+    Clock.currentDateTime.flatMap { dateTime =>
       Task {
-        println(s"Sending $msg to ${u.email}")
+        println(s"Sending $msg to ${u.email} @ $dateTime")
       }
-  })
-
-  // accessor
-  def notify(u: User, msg: String): ZIO[UserNotifier, Throwable, Unit] = ZIO.accessM(_.get.notify(u, msg))
+    }
+  }
 }

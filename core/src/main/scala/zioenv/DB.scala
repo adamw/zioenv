@@ -2,22 +2,26 @@ package zioenv
 
 import zio.{Task, ZIO, ZLayer}
 
+trait DB {
+  def execute(sql: String): Task[Unit]
+}
+
 object DB {
-  // service
-  trait Service {
-    def execute(sql: String): Task[Unit]
+  // implementation
+  case class RelationalDB(cp: ConnectionPool) extends DB {
+    override def execute(sql: String): Task[Unit] =
+      Task {
+        println(s"Running: $sql, on: $cp")
+      }
   }
 
   // layer
-  val liveRelationalDB: ZLayer[HasConnectionPool, Throwable, DB] = ZLayer.fromService { cp =>
-    new Service {
-      override def execute(sql: String): Task[Unit] =
-        Task {
-          println(s"Running: $sql, on: $cp")
-        }
-    }
+  val live: ZLayer[ConnectionPool, Throwable, DB] = ZLayer {
+    for {
+      cp <- ZIO.service[ConnectionPool]
+    } yield RelationalDB(cp)
   }
 
   // accessor
-  def execute(sql: String): ZIO[DB, Throwable, Unit] = ZIO.accessM(_.get.execute(sql))
+  def execute(sql: String): ZIO[DB, Throwable, Unit] = ZIO.serviceWithZIO(_.execute(sql))
 }

@@ -11,12 +11,12 @@ class ConnectionPool(url: String) {
 // integration with ZIO
 object ConnectionPoolIntegration {
   def createConnectionPool(dbConfig: DBConfig): ZIO[Any, Throwable, ConnectionPool] =
-    ZIO.effect(new ConnectionPool(dbConfig.url))
+    ZIO.attempt(new ConnectionPool(dbConfig.url))
   val closeConnectionPool: ConnectionPool => ZIO[Any, Nothing, Unit] = (cp: ConnectionPool) =>
-    ZIO.effect(cp.close()).catchAll(_ => ZIO.unit)
+    ZIO.attempt(cp.close()).catchAll(_ => ZIO.unit)
   def managedConnectionPool(dbConfig: DBConfig): ZManaged[Any, Throwable, ConnectionPool] =
-    ZManaged.make(createConnectionPool(dbConfig))(closeConnectionPool)
+    ZManaged.acquireReleaseWith(createConnectionPool(dbConfig))(closeConnectionPool)
 
-  val live: ZLayer[HasDBConfig, Throwable, HasConnectionPool] =
-    ZLayer.fromServiceManaged(managedConnectionPool)
+  val live: ZLayer[DBConfig, Throwable, ConnectionPool] =
+    ZManaged.service[DBConfig].flatMap(dbConfig => managedConnectionPool(dbConfig)).toLayer
 }

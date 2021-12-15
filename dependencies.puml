@@ -9,10 +9,12 @@ Person(userModel, "UserModel")
 Person(db, "DB")
 Person(connectionPool, "ConnectionPool")
 Person(dbConfig, "DBConfig")
+Person(clock, "Clock")
 
 Rel(userRegistration,userNotifier," ")
 Rel(userRegistration,userModel," ")
 Rel(userModel,db," ")
+Rel(userNotifier,clock," ")
 Rel_R(db,connectionPool," ")
 Rel_R(connectionPool,dbConfig," ")
 @enduml

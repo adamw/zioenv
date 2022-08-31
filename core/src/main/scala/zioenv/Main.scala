@@ -1,19 +1,18 @@
 package zioenv
 
-import zio._
+import zio.*
 
-object Main extends ZIOApp {
-  override type Environment = DB
+object Main extends ZIOAppDefault:
 
-  override val tag: Tag[Environment] = Tag[Environment]
-
-  override val layer: ZLayer[ZIOAppArgs, Any, DB] =
-    ZLayer.make[DB](
-      ConnectionPoolIntegration.live,
-      DB.live,
-      ZLayer.succeed(DBConfig("jdbc://localhost"))
-    )
-
-  override val run: ZIO[DB with Clock, Any, Any] =
-    UserRegistration.register(User("adam", "adam@hello.world")).map { u => println(s"Registered user: $u (layers)") }
-}
+  def run =
+    UserRegistration
+      .register(User("adam", "adam@hello.world"))
+      .map { u => println(s"Registered user: $u (layers)") }
+      .provide(
+        ConnectionPool.layer,
+        UserRegistration.layer,
+        UserRepo.layer,
+        UserNotifier.layer,
+        DB.layer,
+        ZLayer.succeed(DBConfig("jdbc://localhost"))
+      )

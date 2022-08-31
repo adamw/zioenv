@@ -1,22 +1,25 @@
 package zioenv
 
-import zio.{ZIO, ZLayer, ZManaged}
+import zio.*
 
 // procedural interface
-class ConnectionPool(url: String) {
-  def close(): Unit = ()
-  override def toString: String = s"ConnectionPool($url)"
-}
+trait ConnectionPool:
+  def close(): Unit
+
+object ConnectionPool:
+
+  case class ConnectionPoolImpl(url: String) extends ConnectionPool:
+    def close(): Unit = ()
+    override def toString: String = s"ConnectionPool($url)"
 
 // integration with ZIO
-object ConnectionPoolIntegration {
   def createConnectionPool(dbConfig: DBConfig): ZIO[Any, Throwable, ConnectionPool] =
-    ZIO.attempt(new ConnectionPool(dbConfig.url))
+    ZIO.attempt(new ConnectionPoolImpl(dbConfig.url))
   val closeConnectionPool: ConnectionPool => ZIO[Any, Nothing, Unit] = (cp: ConnectionPool) =>
     ZIO.attempt(cp.close()).catchAll(_ => ZIO.unit)
-  def managedConnectionPool(dbConfig: DBConfig): ZManaged[Any, Throwable, ConnectionPool] =
-    ZManaged.acquireReleaseWith(createConnectionPool(dbConfig))(closeConnectionPool)
+  def managedConnectionPool(dbConfig: DBConfig): ZIO[Scope, Throwable, ConnectionPool] =
+    ZIO.acquireRelease(createConnectionPool(dbConfig))(closeConnectionPool)
 
-  val live: ZLayer[DBConfig, Throwable, ConnectionPool] =
-    ZManaged.service[DBConfig].flatMap(dbConfig => managedConnectionPool(dbConfig)).toLayer
-}
+  val layer: ZLayer[DBConfig, Throwable, ConnectionPool] = ZLayer.scoped {
+    ZIO.service[DBConfig].flatMap(dbConfig => managedConnectionPool(dbConfig))
+  }
